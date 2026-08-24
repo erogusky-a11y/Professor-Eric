@@ -1,0 +1,431 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROFESSOR ERIC.EXE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --void:#12102b;
+    --void-2:#1d1a45;
+    --box:#2b2f7a;
+    --box-2:#171a52;
+    --rim:#f6f7ff;
+    --rim-2:#8b93d8;
+    --amber:#f3e39a;
+    --amber-dim:#b9a95c;
+    --ink:#e9ecff;
+    --dim:#9aa2d8;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{margin:0;padding:0;}
+
+  body{
+    background:
+      radial-gradient(circle at 50% 22%, #2a2560 0%, var(--void) 62%),
+      var(--void);
+    color:var(--ink);
+    font-family:"VT323", ui-monospace, monospace;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:20px 14px 40px;
+  }
+
+  /* faint CRT scanline field */
+  body::after{
+    content:"";
+    position:fixed; inset:0;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,.18) 0px,
+      rgba(0,0,0,.18) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:multiply;
+    z-index:99;
+  }
+
+  .cab{width:100%; max-width:640px;}
+
+  /* ---- title bar ---- */
+  .titlebar{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:10px; margin-bottom:14px; flex-wrap:wrap;
+  }
+  .titlebar h1{
+    font-family:"Press Start 2P", monospace;
+    font-size:13px; letter-spacing:.06em; margin:0;
+    color:var(--amber);
+    text-shadow:2px 2px 0 #000;
+  }
+  .tag{
+    font-family:"Press Start 2P", monospace;
+    font-size:8px; letter-spacing:.1em;
+    color:var(--void);
+    background:var(--amber-dim);
+    padding:5px 7px;
+    box-shadow:2px 2px 0 #000;
+  }
+
+  /* ---- sprite stage ---- */
+  .stage{
+    position:relative;
+    background:linear-gradient(#3a3480 0%, #201c56 100%);
+    border:4px solid #000;
+    box-shadow:inset 0 0 0 3px var(--rim-2), 4px 4px 0 #000;
+    padding:14px 14px 0;
+    display:flex; justify-content:center; align-items:flex-end;
+    overflow:hidden;
+  }
+  .stage::before{ /* floor line */
+    content:"";
+    position:absolute; left:0; right:0; bottom:0; height:22px;
+    background:repeating-linear-gradient(90deg,#4b45a0 0 8px,#413b90 8px 16px);
+    border-top:3px solid #000;
+  }
+  #sprite{
+    position:relative; z-index:2;
+    width:min(232px, 58vw);
+    height:auto;
+    image-rendering:pixelated;
+    shape-rendering:crispEdges;
+    filter:drop-shadow(0 6px 0 rgba(0,0,0,.35));
+    animation:bob 2.6s steps(2, end) infinite;
+    margin-bottom:6px;
+  }
+  @keyframes bob{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+
+  .blink .px-l{ fill:#f3e39a !important; }
+  .quiet .px-M{ fill:#8f6534 !important; }
+
+  /* ---- nameplate ---- */
+  .plate{
+    display:inline-block;
+    font-family:"Press Start 2P", monospace;
+    font-size:10px; letter-spacing:.06em;
+    background:var(--box-2);
+    border:3px solid #000;
+    box-shadow:inset 0 0 0 2px var(--rim), 3px 3px 0 #000;
+    padding:8px 12px;
+    margin:14px 0 -3px 6px;
+    position:relative; z-index:3;
+  }
+  .plate span{color:var(--amber);}
+
+  /* ---- dialogue box ---- */
+  .box{
+    background:linear-gradient(var(--box) 0%, var(--box-2) 100%);
+    border:4px solid #000;
+    box-shadow:inset 0 0 0 3px var(--rim), 4px 4px 0 #000;
+    padding:18px 18px 16px;
+    min-height:158px;
+    position:relative;
+  }
+  #text{
+    font-size:23px; line-height:1.35;
+    margin:0; white-space:pre-wrap; word-break:break-word;
+    min-height:96px;
+  }
+  #text.sys{ color:var(--amber); }
+  .cursor{
+    position:absolute; right:16px; bottom:12px;
+    font-size:20px; color:var(--amber);
+    animation:blinkc 1s steps(2,end) infinite;
+  }
+  @keyframes blinkc{0%,49%{opacity:1}50%,100%{opacity:0}}
+  .hidden{display:none !important;}
+
+  /* ---- input row ---- */
+  .row{display:flex; gap:8px; margin-top:14px;}
+  #q{
+    flex:1; min-width:0;
+    font-family:"VT323", monospace; font-size:22px;
+    color:var(--ink); background:var(--void-2);
+    border:3px solid #000;
+    box-shadow:inset 0 0 0 2px var(--rim-2);
+    padding:10px 12px;
+  }
+  #q::placeholder{color:var(--dim);}
+  #q:focus, button:focus-visible{outline:3px solid var(--amber); outline-offset:2px;}
+
+  button{
+    font-family:"Press Start 2P", monospace; font-size:9px;
+    color:var(--void); background:var(--amber-dim);
+    border:3px solid #000; box-shadow:3px 3px 0 #000;
+    padding:10px 12px; cursor:pointer; letter-spacing:.05em;
+  }
+  button:hover:not(:disabled){background:var(--amber);}
+  button:active:not(:disabled){transform:translate(3px,3px); box-shadow:0 0 0 #000;}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+
+  .presets{display:flex; flex-wrap:wrap; gap:7px; margin-top:12px;}
+  .presets button{
+    font-family:"VT323", monospace; font-size:18px; letter-spacing:0;
+    background:var(--void-2); color:var(--dim);
+    border:2px solid #000; box-shadow:2px 2px 0 #000;
+    padding:5px 10px;
+  }
+  .presets button:hover:not(:disabled){background:var(--box); color:var(--ink);}
+
+  .foot{
+    font-size:18px; color:var(--dim); margin-top:20px;
+    border-top:2px dashed #3c3878; padding-top:12px;
+  }
+  .foot b{color:var(--amber-dim); font-weight:normal;}
+
+  @media (prefers-reduced-motion: reduce){
+    #sprite{animation:none;}
+    .cursor{animation:none;}
+    body::after{display:none;}
+  }
+</style>
+
+<div class="cab">
+
+  <div class="titlebar">
+    <h1>PROFESSOR ERIC.EXE</h1>
+    <div class="tag">SIMULATION — NOT YOUR TEACHER</div>
+  </div>
+
+  <div class="stage">
+    <svg id="sprite" viewBox="0 0 32 34" xmlns="http://www.w3.org/2000/svg" role="img"
+         aria-label="A 16-bit pixel art teacher wearing amber-lensed glasses and white headphones."></svg>
+  </div>
+
+  <div class="plate">PROFESSOR ERIC <span>Lv.1</span></div>
+
+  <div class="box">
+    <p id="text" class="sys">A pixel teacher powers on. He does not know your name, has not read your draft, and will forget this the moment you close the tab.
+
+Ask him something about writing.</p>
+    <div class="cursor" id="cursor">&#9660;</div>
+  </div>
+
+  <div class="row">
+    <input id="q" type="text" autocomplete="off" placeholder="Type your question...">
+    <button id="ask">ASK</button>
+  </div>
+
+  <div class="presets">
+    <button data-q="What makes a thesis statement strong?">thesis?</button>
+    <button data-q="How do I integrate a quotation into my own sentence?">quoting?</button>
+    <button data-q="What is the difference between summarizing and paraphrasing?">paraphrase?</button>
+    <button data-q="My paragraph feels choppy. How do I fix transitions?">transitions?</button>
+    <button data-q="How do I cite a source in APA style?">APA?</button>
+    <button data-q="Do you know anything about me?">know me?</button>
+  </div>
+
+  <p class="foot">
+    <b>How this works:</b> every question goes to a language model with no memory of you and no
+    record of your work. Whatever comes back sounds like a teacher. It is not one.
+  </p>
+
+</div>
+
+<script>
+/* ---------------- pixel portrait ---------------- */
+const ART = [
+"................................",
+"..........WWWWWWWWWWWW..........",
+".........WHHHHHHHHHHHHW.........",
+"........WHHHHHHHHHHHHHHW........",
+"........WHHHHHHHHHHHHHHW........",
+"........WhHHHHHHHHHHHHhW........",
+"........WhSSSSSSSSSSSShW........",
+"........WhSSSSSSSSSSSShW........",
+"........WhShhhSSSShhhShW........",
+"........WGGGGGGGGGGGGGGW........",
+"......WWWGLLLLLGGLLLLLGWWW......",
+".....wWWWGLLlLLGGLLlLLGWWWw.....",
+".....UWWWGLLLLLGGLLLLLGWWWU.....",
+".....UWWWGGGGGGGGGGGGGGWWWU.....",
+".....wWWWhSSSSSssSSSSShWWWw.....",
+".....wWWWhSSSSSssSSSSShWWWw.....",
+".....wWWWhSSSSSssSSSSShWWWw.....",
+"......WWWsSSBBBBBBBBSSsWWW......",
+".........sSBBMMMMMMBBSs.........",
+".........sBBBBBBBBBBBBs.........",
+"..........bBBBBBBBBBBb..........",
+"...........bBBBBBBBBb...........",
+"............bBBBBBBb............",
+".............bbbbbb.............",
+"............NNNNNNNN............",
+"............NNNNNNNN............",
+"........CCCCCTTTTTTCCCCC........",
+"......cCCCCCCTTTTTTCCCCCCc......",
+"....cCCCCCCCCTTTTTTCCCCCCCCc....",
+"...cCCCCCCCCCCTTTTCCCCCCCCCCc...",
+"..cCCCCCCCCCCCTTTTCCCCCCCCCCCc..",
+"..cCCCCCCCCCCCTTTTCCCCCCCCCCCc..",
+".cCCCCCCCCCCCCTTTTCCCCCCCCCCCCc.",
+".cCCCCCCCCCCCCTTTTCCCCCCCCCCCCc."
+];
+
+const PAL = {
+  W:"#f4f6f9", w:"#aeb6c2", U:"#2f6fd0",
+  H:"#dfae6b", h:"#a97b3e",
+  S:"#f0c8a8", s:"#d9a882", N:"#d9a882",
+  G:"#16161c", L:"#f3e39a", l:"#b9a95c",
+  B:"#8f6534", b:"#6d4a25", M:"#6e3f34",
+  C:"#4a7fb5", c:"#2f5a86", T:"#f5f5f5"
+};
+
+(function draw(){
+  const svg = document.getElementById("sprite");
+  let out = "";
+  for(let y=0; y<ART.length; y++){
+    const row = ART[y];
+    for(let x=0; x<row.length; x++){
+      const ch = row[x];
+      if(ch === ".") continue;
+      out += '<rect class="px-'+ch+'" x="'+x+'" y="'+y+'" width="1" height="1" fill="'+PAL[ch]+'"/>';
+    }
+  }
+  svg.innerHTML = out;
+})();
+
+/* idle blink */
+const spriteEl = document.getElementById("sprite");
+setInterval(() => {
+  spriteEl.classList.add("blink");
+  setTimeout(() => spriteEl.classList.remove("blink"), 130);
+}, 3800);
+
+/* ---------------- dialogue engine ---------------- */
+const textEl   = document.getElementById("text");
+const cursorEl = document.getElementById("cursor");
+const inputEl  = document.getElementById("q");
+const askBtn   = document.getElementById("ask");
+
+let pages = [], pageIdx = 0, typing = false, typeTimer = null, busy = false;
+let history = [];
+
+function paginate(str){
+  const words = str.split(/\s+/);
+  const out = [];
+  let cur = "";
+  for(const w of words){
+    if((cur + " " + w).trim().length > 190){ out.push(cur.trim()); cur = w; }
+    else { cur += " " + w; }
+  }
+  if(cur.trim()) out.push(cur.trim());
+  return out.length ? out : [str];
+}
+
+function showPage(i){
+  clearInterval(typeTimer);
+  const full = pages[i];
+  let n = 0;
+  typing = true;
+  cursorEl.classList.add("hidden");
+  textEl.textContent = "";
+  typeTimer = setInterval(() => {
+    textEl.textContent = full.slice(0, ++n);
+    spriteEl.classList.toggle("quiet", n % 4 < 2);
+    if(n >= full.length){
+      clearInterval(typeTimer);
+      typing = false;
+      spriteEl.classList.remove("quiet");
+      cursorEl.classList.remove("hidden");
+    }
+  }, 18);
+}
+
+function say(str, isSystem){
+  textEl.classList.toggle("sys", !!isSystem);
+  pages = paginate(str);
+  pageIdx = 0;
+  showPage(0);
+}
+
+function advance(){
+  if(typing){
+    clearInterval(typeTimer);
+    textEl.textContent = pages[pageIdx];
+    typing = false;
+    spriteEl.classList.remove("quiet");
+    cursorEl.classList.remove("hidden");
+    return true;
+  }
+  if(pageIdx < pages.length - 1){ showPage(++pageIdx); return true; }
+  return false;
+}
+
+document.querySelector(".box").addEventListener("click", advance);
+
+/* ---------------- model call ---------------- */
+const SYSTEM = `You are a simulated English composition instructor rendered as a 16-bit sprite in a classroom demonstration. A real instructor is showing students what it is like to be taught by software instead of by him.
+
+Answer questions about writing, grammar, rhetoric, research, and citation the way a competent college composition instructor would: plain, direct, practical. Give the student something they can actually use.
+
+Rules:
+- 2 to 5 sentences. Plain text only. No markdown, no bullet points, no emoji, no headings.
+- Never invent statistics, studies, quotations, or sources. If you do not know a real source, say so.
+- Do not claim to remember the student, to have read their work, or to know anything about their class, their draft, or their grades. You do not.
+- If asked whether you are the real instructor, or whether you know the student, say plainly that you are not and you do not.
+- If a question is outside writing and language, say it is outside what you can help with here and point back to writing.
+- Never flatter. Do not open with praise for the question.`;
+
+async function ask(question){
+  if(busy) return;
+  busy = true;
+  askBtn.disabled = true;
+  document.querySelectorAll(".presets button").forEach(b => b.disabled = true);
+
+  textEl.classList.add("sys");
+  cursorEl.classList.add("hidden");
+  textEl.textContent = "...";
+
+  history.push({ role: "user", content: question });
+
+  try{
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: SYSTEM,
+        messages: history.slice(-8)
+      })
+    });
+    if(!res.ok) throw new Error("status " + res.status);
+    const data = await res.json();
+    const reply = (data.content || [])
+      .filter(b => b.type === "text")
+      .map(b => b.text)
+      .join("\n")
+      .trim();
+    if(!reply) throw new Error("empty");
+    history.push({ role: "assistant", content: reply });
+    say(reply, false);
+  }catch(err){
+    history.pop();
+    say("The connection dropped, so nothing came back. Try the question again, or ask the person standing at the front of the room.", true);
+  }finally{
+    busy = false;
+    askBtn.disabled = false;
+    document.querySelectorAll(".presets button").forEach(b => b.disabled = false);
+    inputEl.focus();
+  }
+}
+
+function submit(){
+  const v = inputEl.value.trim();
+  if(!v) return;
+  inputEl.value = "";
+  ask(v);
+}
+
+askBtn.addEventListener("click", submit);
+inputEl.addEventListener("keydown", e => { if(e.key === "Enter") submit(); });
+document.querySelectorAll(".presets button").forEach(b => {
+  b.addEventListener("click", () => ask(b.dataset.q));
+});
+</script>
